@@ -43,8 +43,5 @@
     "singleQuote": true,
     "tabWidth": 4,
     "useTabs": true
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
   }
 }
