@@ -87,8 +87,8 @@ This will be parsed as: select all columns such that `column1` is equal to `valu
   ```
   It will display logs which have value of 'message' column equal to 'error' from all files from the '/var/www/logs' directory.
 - ```bash
-	logparser -q="[customProperties]"
-	logparser -q="[customProperties]:"
+  logparser -q="[customProperties]"
+  logparser -q="[customProperties]:"
   ```
   This command allows to display only the given columns. In this case - column 'customProperties'.
 - ```bash
