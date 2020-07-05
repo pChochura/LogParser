@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const table = require('table');
 const fs = require('fs').promises;
 
