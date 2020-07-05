@@ -1,0 +1,47 @@
+{
+  "name": "logparser",
+  "version": "1.0.0",
+  "description": "Utility to parse json logs and a CLI to help filter them",
+  "main": "bin.js",
+  "bin": "./bin.js",
+  "scripts": {
+    "format": "prettier --write '**/*.js'",
+    "format:check": "prettier --check '**/*.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pawelek99/LogParser.git"
+  },
+  "keywords": [
+    "logs",
+    "parser",
+    "cli",
+    "utility",
+    "log",
+    "log-parser",
+    "logs-parser",
+    "logging",
+    "navigate"
+  ],
+  "files": [
+    "bin.js"
+  ],
+  "author": "Paweł Chochura",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Pawelek99/LogParser/issues"
+  },
+  "homepage": "https://github.com/Pawelek99/LogParser#readme",
+  "dependencies": {
+    "table": "^5.4.6"
+  },
+  "devDependencies": {
+    "prettier": "^2.0.5"
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "singleQuote": true,
+    "tabWidth": 4,
+    "useTabs": true
+  }
+}
