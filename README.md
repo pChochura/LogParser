@@ -1,6 +1,6 @@
 # Log parser
 
-![Tests](https://github.com/Pawelek99/loqs/workflows/Tests/badge.svg) [![npm version](https://badge.fury.io/js/loqs.svg)](https://badge.fury.io/js/loqs)
+![Tests](https://github.com/Pawelek99/LogParser/workflows/Tests/badge.svg) [![npm version](https://badge.fury.io/js/loqs.svg)](https://badge.fury.io/js/loqs)
 
 ---
 
