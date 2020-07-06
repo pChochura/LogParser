@@ -29,7 +29,7 @@ const parseValue = (value) => {
 };
 
 const parseEntries = (value, padding = 1) => {
-	return value.slice(padding, value.length - padding).split(',');
+	return value.slice(padding, value.length - padding).split(',').filter(Boolean);
 };
 
 const checkIfEntryIsMissing = (input1, input2, callback) => {
@@ -73,6 +73,10 @@ const isValueMatchedByExpression = (existingValue, value, operation, isRegex, co
 		case 'array':
 			value.argument = parseEntries(value.argument, 2);
 			existingValue = JSON.parse(existingValue);
+			if (!Array.isArray(existingValue)) {
+				return false;
+			}
+
 			const index = value.argument.indexOf('...');
 			if (index !== -1) {
 				value.argument.splice(index, 1);
@@ -83,7 +87,17 @@ const isValueMatchedByExpression = (existingValue, value, operation, isRegex, co
 			return checkIfEntryIsMissing(value.argument, existingValue, (_, value, input) => input.includes(value));
 		case 'object':
 			let parsedValue = {};
-			existingValue = JSON.parse(existingValue);
+			try {
+				existingValue = JSON.parse(existingValue);
+			} catch (error) {
+				// It is not valid JSON object
+				return false;
+			}
+
+			if (Array.isArray(existingValue)) {
+				return false;
+			}
+
 			parseEntries(value.argument, 2).forEach((entry) => {
 				const keyValuePair = entry.split(':');
 				if (keyValuePair[0] === '...') {
