@@ -106,8 +106,8 @@ To help filter values we provide you with utility functions such as:
   
   Parses the given column as a number and if it is a floating point number uses floor function.
   ```bash
-  loqs -q "[floor(amount)]"
-  loqs -q "[floor(price.amount)]"
+  loqs -q "[floor(amount)]" // in progress
+  loqs -q "[floor(price.amount)]" // in progress
   loqs -q "floor(amount)='12'"
   ```
   It allows you to floor selected columns as well as filtered values.
@@ -115,8 +115,8 @@ To help filter values we provide you with utility functions such as:
   
   Parses the given column as a number and if it is a floating point number uses ceil function.
   ```bash
-  loqs -q "[ceil(amount)]"
-  loqs -q "[ceil(price.amount)]"
+  loqs -q "[ceil(amount)]" // in progress
+  loqs -q "[ceil(price.amount)]" // in progress
   loqs -q "ceil(amount)='11'"
   ```
   It allows you to ceil selected columns as well as filtered values.
@@ -124,8 +124,8 @@ To help filter values we provide you with utility functions such as:
   
   Parses the given column as a number and if it is a floating point number uses round function.
   ```bash
-  loqs -q "[round(amount)]"
-  loqs -q "[round(price.amount)]"
+  loqs -q "[round(amount)]" // in progress
+  loqs -q "[round(price.amount)]" // in progress
   loqs -q "round(amount)='11'"
   ```
   It allows you to round selected columns as well as filtered values.
