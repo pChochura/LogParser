@@ -1,6 +1,8 @@
 const table = require('table');
 const fs = require('fs').promises;
 
+const validationRegex = /^(\[(.*?)(:|$))?((.*?\(?[a-z0-9._-]+\)?[=~!<>]{1,2}(.*\('.*?'\)|(['\/])?.*?\7)(,|;|$)?)*)/;
+
 const showHelp = () => {
 	console.log(`
 Parses JSON formatted logs from a given directory and allows to filter them via query language.
@@ -12,7 +14,7 @@ Options:
   -q, --query                     query to select matching entries
 
 Query syntax:
-  [column1, column2.column3]                          - selects column1 and column2.column3
+  [column2.subColumn3, column3[subColumn1, ...]]      - selects column1 and column2.column3
   [..., column4]                                      - selects all columns and additionally column4
   []                                                  - selects empty table
   column1='value1'                                    - selects only entries where values from column1 are equal to value1
@@ -77,9 +79,8 @@ const validateOptions = async (tempOptions) => {
 
 	if (tempOptions.hasOwnProperty('query')) {
 		if (tempOptions.query) {
-			const regex = /^(\[(((\.\.\.|[a-zA-Z0-9_.-]+),?)*)\](:|$))?(([a-zA-Z0-9_.-]+!?[=~](['\/]).*?\8(,|;|$))*)/;
 			const query = tempOptions.query.replace(/ */g, '');
-			if (!query.match(regex)) {
+			if (!query.match(validationRegex)) {
 				console.error('Query have to be valid');
 				process.exit(1);
 			}
@@ -101,10 +102,9 @@ const parseQuery = (options) => {
 		};
 	}
 
-	const regex = /^(\[(((\.\.\.|[a-zA-Z0-9_.-]+),?)*)\](:|$))?(([a-zA-Z0-9_.-]+!?[=~](['\/]).*?\8(,|;|$))*)/;
-	const result = regex.exec(options.query);
-	const columns = result[2] !== undefined ? result[2] : '...';
-	let operators = result[6];
+	const result = validationRegex.exec(options.query);
+	const columns = result[2] !== undefined ? result[2].slice(0, result[2].length - 1) : '...';
+	const operators = result[4];
 	const conditions = [[]];
 
 	operators &&
@@ -153,18 +153,47 @@ const parseQuery = (options) => {
 			}
 		});
 
+	const parseColumns = (columns) => {
+		const temp = columns.split(',');
+		const opening = /\[/g;
+		const closing = /\]/g;
+		for (let i = temp.length - 1; i >= 0; i--) {
+			if ((temp[i].match(closing) || []).length !== (temp[i].match(opening) || []).length) {
+				temp[Math.max(i - 1, 0)] = temp[i - 1] + ',' + temp[i];
+				i > 0 && delete temp[i];
+			}
+		}
+		const output = [];
+
+		const getNested = (entry) => {
+			const startIndex = entry.indexOf('[');
+			const endIndex = entry.lastIndexOf(']');
+			if (startIndex === -1 || endIndex === -1) {
+				return [entry];
+			}
+			const parent = entry.slice(0, startIndex);
+			const nested = parseColumns(entry.slice(startIndex + 1, endIndex));
+			return nested.map((n) => n === '...' ? parent : parent + '.' + n);
+		};
+
+		for (const entry of temp.filter((entry) => entry)) {
+			output.push(...getNested(entry));
+		}
+
+		return output;
+	};
+
+	const parsedColumns = parseColumns(columns);
+
 	const columnMatcher = (original) => {
-		let output = columns;
-		output = output.split(',');
-		const index = output.indexOf('...');
-		if (index !== -1) {
-			output.splice(index, 1);
-			output = [
-				...output,
-				...original.filter((column) => columns.indexOf(column) === -1),
+		if (parsedColumns.includes('...')) {
+			return [
+				...parsedColumns.filter((column) => column !== '...'),
+				...original.filter((column) => !parsedColumns.includes(column)),
 			];
 		}
-		return output;
+
+		return parsedColumns;
 	};
 
 	return {
