@@ -16,8 +16,8 @@ Options:
   -q, --query                     query to select matching entries
 
 Query syntax:
-  [column2.subColumn3, column3[subColumn1, ...]]      - selects column1 and column2.column3
-  [..., column4]                                      - selects all columns and additionally column4
+  [column2.subColumn3,column3[subColumn1,...]]        - selects column1 and column2.column3
+  [...,column4]                                       - selects all columns and additionally column4
   []                                                  - selects empty table
   column1='value1'                                    - selects only entries where values from column1 are equal to value1
   column2!='value2'                                   - selects only entries where values from column2 are not equal to value2
@@ -25,12 +25,20 @@ Query syntax:
   column4!=/regex2/                                   - selects only entries where values from column4 are not matching regex2
   column5~'value3'                                    - selects only entries where values from column5 are containing value3
   column6!~'value4'                                   - selects only entries where values from column6 are not containing value3
-  [column1]: column2='value5'                         - selects column1 where values from column2 are equal to value5
-  [..., column2]: column3~'value6'                    - selects all columns and additionally column2 where values from column3 are containig value6
-  [column1]: column2~'value6'&column3='value2'        - selects column1 where values from column2 are containig value6 AND values from column3 are equal to value2
-  [column2]: column1!='value3'|column2=/regex1/       - selects column2 where values from column1 are not equal to value3 OR values from column2 are matching regex1
+  [column1]:column2='value5'                          - selects column1 where values from column2 are equal to value5
+  [...,column2]:column3~'value6'                      - selects all columns and additionally column2 where values from column3 are containig value6
+  [column1]:column2~'value6'&column3='value2'         - selects column1 where values from column2 are containig value6 AND values from column3 are equal to value2
+  [column2]:column1!='value3'|column2=/regex1/        - selects column2 where values from column1 are not equal to value3 OR values from column2 are matching regex1
   column5='value2'&column2=/regex2/|column1~'value6'  - selects only entries where values from column5 are equal to value5 AND values from column2 are matching regex2
-                                                        OR values from column1 are containing value6
+														OR values from column1 are containing value6
+  column<=date('2020-02-02')                          - selects only entries where the value of the column parsed as a date is before or equal to 2020-02-02
+  column=object('{key:value}')                        - selects only entries where the value of the column parsed as a JSON object for the same keys have the same values
+  column=object('{key:value,...}')                    - selects only entries where the value of the column parsed as a JSON object contains the given key-value pairs
+  column=array('[value]')                             - selects only entries where the value of the column parsed as a JSON array have only entry equal to value
+  column=array('[value,...]')                         - selects only entries where the value of the column parsed as a JSON array contains entry value
+  floor(column)='-12'
+  ceil(column)!='12.2'
+  round(column)>='12'                                 - selects only entries where the value of column parsed as a float matches the given expression
 
 If you omit 'directory' parameter current directory will be used.
 	`);
