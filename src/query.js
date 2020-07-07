@@ -1,14 +1,19 @@
 const validationRegex = /^(\[(.*?)(:|$))?((.*?\(?[a-z0-9._-]+\)?[=~!<>]{1,2}(.*\('.*?'\)|(['\/])?.*?\7)(&|\||$)?)*)/i;
 const operatorRegex = /^([a-z0-9_.()-]+)([=~!<>]{1,2})((.*\('.*?'\))|(['\/])(.*)?\5)([|&])?/i;
+const expressionRegex = /^[a-z]+\([żąółźńćęśa-z0-9_.-]+\)(!?[=~]|[<>]=?)('|\/)[ żąółźńćęśa-z0-9(){}\[\]_:.,-]+\2$|^[żąółźńćęśa-z0-9_.-]+(!?=|[<>]=?)[a-z]+\('[[{]?[ żąółźńćęśa-z0-9(){}\[\]_:.,-]*[}\]]?'\)$|^[żąółźńćęśa-z0-9_.-]+(!?[=~]|[<>]=?)(['\/])[ żąółźńćęśa-z0-9(){}\[\]_:.,-]+\5$/;
+const dateRegex = /^\d{4}(-\d{1,2}(-\d{1,2})?)?( \d{1,2}(:\d{1,2})?(:\d{1,2})?)?$/;
 
 const getFunctionFromValue = (value) => {
 	const indexOfOpeningBracket = value.indexOf('(');
 	const indexOfClosingBracket = value.lastIndexOf(')');
-	const method = indexOfOpeningBracket !== -1 && value.slice(0, indexOfOpeningBracket);
+	const method =
+		indexOfOpeningBracket !== -1 && value.slice(0, indexOfOpeningBracket);
 
 	return {
 		method,
-		argument: method ? value.slice(indexOfOpeningBracket + 1, indexOfClosingBracket) : value,
+		argument: method
+			? value.slice(indexOfOpeningBracket + 1, indexOfClosingBracket)
+			: value,
 	};
 };
 
@@ -29,7 +34,10 @@ const parseValue = (value) => {
 };
 
 const parseEntries = (value, padding = 1) => {
-	return value.slice(padding, value.length - padding).split(',').filter(Boolean);
+	return value
+		.slice(padding, value.length - padding)
+		.split(',')
+		.filter(Boolean);
 };
 
 const checkIfEntryIsMissing = (input1, input2, callback) => {
@@ -47,7 +55,13 @@ const checkIfEntryIsMissing = (input1, input2, callback) => {
 	return true;
 };
 
-const isValueMatchedByExpression = (existingValue, value, operation, isRegex, column) => {
+const isValueMatchedByExpression = (
+	existingValue,
+	value,
+	operation,
+	isRegex,
+	column,
+) => {
 	existingValue = parseValue(existingValue);
 	switch (column.method) {
 		case 'floor':
@@ -67,14 +81,42 @@ const isValueMatchedByExpression = (existingValue, value, operation, isRegex, co
 
 	switch (value.method) {
 		case 'date':
+			if (!value.argument.match(dateRegex)) {
+				console.error(
+					`Following value is not valid date: ${value.argument}`,
+				);
+				process.exit(1);
+			}
+
 			value.argument = new Date(value.argument);
 			existingValue = new Date(existingValue);
 			break;
 		case 'array':
+			if (!['=', '!='].includes(operation)) {
+				console.error(
+					`Following expression is not valid: ${
+						column.method
+							? `${column.method}(${column.argument})`
+							: column.argument
+					}${operation}${
+						value.method
+							? `${value.method}(${value.argument})`
+							: value.argument
+					}`,
+				);
+				process.exit(1);
+			}
+
 			value.argument = parseEntries(value.argument, 2);
-			existingValue = JSON.parse(existingValue);
+			try {
+				existingValue = JSON.parse(existingValue);
+			} catch (error) {
+				// It is not valid JSON object
+				return operation[0] === '!';
+			}
+
 			if (!Array.isArray(existingValue)) {
-				return false;
+				return operation[0] === '!';
 			}
 
 			const index = value.argument.indexOf('...');
@@ -84,18 +126,40 @@ const isValueMatchedByExpression = (existingValue, value, operation, isRegex, co
 				value.argument = [...new Set(value.argument)];
 			}
 
-			return checkIfEntryIsMissing(value.argument, existingValue, (_, value, input) => input.includes(value));
+			return (
+				(operation[0] === '!') !==
+				checkIfEntryIsMissing(
+					value.argument,
+					existingValue,
+					(_, value, input) => input.includes(value),
+				)
+			);
 		case 'object':
+			if (!['=', '!='].includes(operation)) {
+				console.error(
+					`Following expression is not valid: ${
+						column.method
+							? `${column.method}(${column.argument})`
+							: column.argument
+					}${operation}${
+						value.method
+							? `${value.method}(${value.argument})`
+							: value.argument
+					}`,
+				);
+				process.exit(1);
+			}
+
 			let parsedValue = {};
 			try {
 				existingValue = JSON.parse(existingValue);
 			} catch (error) {
 				// It is not valid JSON object
-				return false;
+				return operation[0] === '!';
 			}
 
 			if (Array.isArray(existingValue)) {
-				return false;
+				return operation[0] === '!';
 			}
 
 			parseEntries(value.argument, 2).forEach((entry) => {
@@ -112,7 +176,14 @@ const isValueMatchedByExpression = (existingValue, value, operation, isRegex, co
 				parsedValue[keyValuePair[0]] = keyValuePair[1];
 			});
 
-			return checkIfEntryIsMissing(parsedValue, existingValue, (key) => parsedValue[key] === existingValue[key]);
+			return (
+				(operation[0] === '!') !==
+				checkIfEntryIsMissing(
+					parsedValue,
+					existingValue,
+					(key) => parsedValue[key] === existingValue[key],
+				)
+			);
 	}
 
 	switch (operation) {
@@ -123,14 +194,27 @@ const isValueMatchedByExpression = (existingValue, value, operation, isRegex, co
 		case '!=':
 		case '=':
 			if (operation.match(/^!?=$/) && isRegex) {
-				return (operation[0] === '!') !== !!existingValue.match(new RegExp(value.argument));
+				return (
+					(operation[0] === '!') !==
+					!!existingValue.match(new RegExp(value.argument))
+				);
 			}
 
 			switch (operation[0]) {
 				case '<':
-					return existingValue && (operation[1] === '=' ? existingValue <= value.argument : existingValue < value.argument);
+					return (
+						existingValue &&
+						(operation[1] === '='
+							? existingValue <= value.argument
+							: existingValue < value.argument)
+					);
 				case '>':
-					return existingValue && (operation[1] === '=' ? existingValue >= value.argument : existingValue > value.argument);
+					return (
+						existingValue &&
+						(operation[1] === '='
+							? existingValue >= value.argument
+							: existingValue > value.argument)
+					);
 				case '!':
 					return existingValue !== value.argument;
 				default:
@@ -138,7 +222,11 @@ const isValueMatchedByExpression = (existingValue, value, operation, isRegex, co
 			}
 		case '~':
 		case '!~':
-			return existingValue && (operation[0] === '!') !== existingValue.includes(value.argument);
+			return (
+				existingValue &&
+				(operation[0] === '!') !==
+					existingValue.includes(value.argument)
+			);
 	}
 
 	return false;
@@ -152,6 +240,11 @@ const getConditionsFromExpressions = (expressions) => {
 	const conditions = [[]];
 
 	expressions.split(/(?<=[&|])/g).forEach((expression) => {
+		if (!expression.match(expressionRegex)) {
+			console.error(`Following expression is not valid: ${expression}`);
+			process.exit(1);
+		}
+
 		const result = operatorRegex.exec(expression);
 		const column = getFunctionFromValue(result[1]);
 
@@ -159,17 +252,23 @@ const getConditionsFromExpressions = (expressions) => {
 		const isRegex = result[5] === '/';
 
 		const value = getFunctionFromValue(result[4] || result[6]);
-		value.argument.slice(1, value.argument.length - 1);
+		value.argument = value.argument.slice(1, value.argument.length - 1);
 
 		conditions[conditions.length - 1].push({
 			[column.argument]: {
 				matches: (existingValue) => {
-					return isValueMatchedByExpression(existingValue, { ...value }, operation, isRegex, { ...column });
+					return isValueMatchedByExpression(
+						existingValue,
+						{ ...value },
+						operation,
+						isRegex,
+						{ ...column },
+					);
 				},
 			},
 		});
 
-		// If the expressions are split by a '|' that means we have to create another 'AND' group
+		// If the expressions are split by a '|' it means that we have to create another 'AND' group
 		result[7] === '|' && conditions.push([]);
 	});
 
@@ -197,12 +296,15 @@ const parseColumns = (columns) => {
 			(parsedColumns[i].match(closingBracketRegex) || []).length !==
 			(parsedColumns[i].match(openingBracketRegex) || []).length
 		) {
-			parsedColumns[Math.max(i - 1, 0)] = parsedColumns[i - 1] + ',' + parsedColumns[i];
+			parsedColumns[Math.max(i - 1, 0)] =
+				parsedColumns[i - 1] + ',' + parsedColumns[i];
 			i > 0 && delete parsedColumns[i];
 		}
 	}
 
-	return parsedColumns.flatMap((column) => column && parseNestedColumn(column));
+	return parsedColumns.flatMap(
+		(column) => column && parseNestedColumn(column),
+	);
 };
 
 const parseQuery = (options) => {
@@ -242,7 +344,7 @@ const parseQuery = (options) => {
 					if (column.includes('.')) {
 						v = value;
 						const tree = column.split('.');
-						tree.forEach((c) => v = v && v[c]);
+						tree.forEach((c) => (v = v && v[c]));
 					}
 
 					if (!condition[column].matches(v)) {

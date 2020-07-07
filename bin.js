@@ -81,12 +81,11 @@ const validateOptions = async (tempOptions) => {
 
 	if (tempOptions.hasOwnProperty('query')) {
 		if (tempOptions.query) {
-			const query = tempOptions.query.replace(/ /g, '');
-			if (!query.match(validationRegex)) {
+			if (!tempOptions.query.match(validationRegex)) {
 				console.error('Query have to be valid');
 				process.exit(1);
 			}
-			options.query = query;
+			options.query = tempOptions.query;
 		} else {
 			console.error('Query cannot be empty');
 			process.exit(1);

@@ -17,15 +17,17 @@ const loadFilesFrom = async (directory, extension) => {
 };
 
 const getLogsFromFiles = async (files) => {
-	return Promise.all(files.map(async (file) => {
-		const content = (await fs.readFile(file)).toString();
-		const logEntries = content
-			.split('\n')
-			.filter((line) => line)
-			.map((line) => JSON.parse(line));
+	return Promise.all(
+		files.map(async (file) => {
+			const content = (await fs.readFile(file)).toString();
+			const logEntries = content
+				.split('\n')
+				.filter((line) => line)
+				.map((line) => JSON.parse(line));
 
-		return { file, logEntries };
-	}));
+			return { file, logEntries };
+		}),
+	);
 };
 
 const getCommonColumns = (entries) => {
@@ -59,9 +61,7 @@ const getRowFromLogEntry = (columns, logEntry) => {
 			}
 		}
 
-		return typeof value === 'object'
-			? JSON.stringify(value)
-			: value;
+		return typeof value === 'object' ? JSON.stringify(value) : value;
 	});
 };
 
@@ -79,7 +79,7 @@ const parseLogs = async (args, query, display = true) => {
 			if (query.matches(logEntry)) {
 				data.push(getRowFromLogEntry(columns, logEntry));
 			}
-		})
+		}),
 	);
 
 	if (data[0].length !== 0 && display) {
