@@ -24,7 +24,11 @@
     "navigate"
   ],
   "files": [
-    "bin.js"
+    "bin.js",
+    "src/loqs.js",
+    "src/loqs.d.ts",
+    "src/query.d.ts",
+    "src/query.d.ts"
   ],
   "author": "Paweł Chochura",
   "license": "ISC",
