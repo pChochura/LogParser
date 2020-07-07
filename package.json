@@ -1,6 +1,6 @@
 {
   "name": "loqs",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Utility to parse json logs and a CLI to help filter them",
   "main": "bin.js",
   "bin": "./bin.js",
