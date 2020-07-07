@@ -27,7 +27,7 @@
     "bin.js",
     "src/loqs.js",
     "src/loqs.d.ts",
-    "src/query.ts",
+    "src/query.js",
     "src/query.d.ts"
   ],
   "author": "Paweł Chochura",
